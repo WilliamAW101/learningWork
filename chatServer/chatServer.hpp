@@ -9,9 +9,6 @@
 #include <thread>
 #include <cstring>
 #include <vector>
-#include <mutex>
-#include <algorithm>
-#include <memory>
 
 class ChatServer {
     public:
@@ -20,17 +17,12 @@ class ChatServer {
         void startServer();
         void stopServer();
         bool sClientActive();
-        bool checkServerReady();
     private:
         sockaddr_in serverAddress;
         int serverSocket;
         std::atomic<bool> stopThread;
         std::atomic<int> sharedCounter;
         void handleClient(int clientSocket);
-        void broadCastMessage(const std::string &message, int clientSenderSocket);
-        std::atomic<bool> isServerReady;
-        std::vector<int> clientSockets;
-        std::mutex clientLock;
 
 };
 

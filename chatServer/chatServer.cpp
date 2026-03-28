@@ -10,14 +10,12 @@ ChatServer::ChatServer() {
     serverAddress.sin_addr.s_addr = INADDR_ANY;
 
     stopThread = false;
-    isServerReady = false;
     sharedCounter = 0;
 }
 
 void ChatServer::startServer(){
     bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
     listen(serverSocket, 5);
-    isServerReady.store(true);
 
     while(!stopThread.load(std::memory_order_relaxed)) {
         int clientSocket= accept(serverSocket, nullptr, nullptr);
@@ -27,6 +25,7 @@ void ChatServer::startServer(){
         std::thread clientThread(&ChatServer::handleClient, this, clientSocket);
         clientThread.detach();
     }
+    close(serverSocket);
 }
 
 void ChatServer::stopServer() { 
@@ -36,25 +35,10 @@ void ChatServer::stopServer() {
 }
 
 void ChatServer::createClient(sockaddr_in serverAddress, int client) {
-    // If I want these clients listening, I probably want to create a listener on a seperate thread too
     sharedCounter.fetch_add(1);
     int clientSocket = socket(AF_INET, SOCK_STREAM, 0);
-    connect(clientSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
-    
-    // just in case, I may have a boolean to force shutoff the listener thread if client shuts off early
-    std::shared_ptr<std::atomic<bool>> forceStopClient = std::make_shared<std::atomic<bool>>(false);
-
-    std::thread clientListener([clientSocket, client, forceStopClient]() {
-        char buffer[1024] = { 0 };
-        while (recv(clientSocket, buffer, sizeof(buffer), 0) > 0){
-            if (forceStopClient->load())
-                break;
-            std::cout << "From Client: " << std::to_string(client) << " received message: " << buffer << "\n";
-        }
-
-    });
-    clientListener.detach();
-
+    connect(clientSocket, (struct sockaddr*)&serverAddress,
+        sizeof(serverAddress));
     for (int i = 0; i < 5; i++) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -66,9 +50,7 @@ void ChatServer::createClient(sockaddr_in serverAddress, int client) {
     }
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    sharedCounter.fetch_sub(1);
-    forceStopClient.get()->store(true); 
-    close(clientSocket);
+    sharedCounter.fetch_sub(1); 
 }
 
 bool ChatServer::sClientActive() {
@@ -82,39 +64,12 @@ bool ChatServer::sClientActive() {
 }
 
 void ChatServer::handleClient(int clientSocket) {
-
-    {
-        std::unique_lock<std::mutex> lock(clientLock);
-        clientSockets.push_back(clientSocket);
-    }
-
     while (1) {
         char buffer[1024] = { 0 };
-        if(recv(clientSocket, buffer, sizeof(buffer), 0) > 0){
+        if(recv(clientSocket, buffer, sizeof(buffer), 0) > 0)
             std::cout << "Message from client: " << buffer << "\n";
-            broadCastMessage(buffer, clientSocket);
-        }
         else
             break;
     }
-
-    {
-        std::unique_lock<std::mutex> lock(clientLock);
-        auto socketindex = std::find(clientSockets.begin(), clientSockets.end(), clientSocket);
-        if (socketindex != clientSockets.end())
-            clientSockets.erase(socketindex);
-    }
     close(clientSocket);
-}
-
-bool ChatServer::checkServerReady(){
-    return isServerReady.load();
-}
-
-void ChatServer::broadCastMessage(const std::string &message, int clientSenderSocket){
-    std::unique_lock<std::mutex> lock(clientLock);
-    for(int clientSocket : clientSockets) {
-        if (clientSocket != clientSenderSocket)
-            send(clientSocket, message.c_str(), message.length(), 0);
-    }
 }
