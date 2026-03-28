@@ -1,0 +1,4 @@
+/home/angelo/randomCrap/chatServer/build/CMakeFiles/server.dir
+/home/angelo/randomCrap/chatServer/build/CMakeFiles/client.dir
+/home/angelo/randomCrap/chatServer/build/CMakeFiles/edit_cache.dir
+/home/angelo/randomCrap/chatServer/build/CMakeFiles/rebuild_cache.dir
