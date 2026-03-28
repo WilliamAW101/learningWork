@@ -10,12 +10,8 @@ int main() {
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(8080);
     serverAddress.sin_addr.s_addr = INADDR_ANY;
+
     std::cout << "Spawning Clients" << std::endl;
-
-    // we need to wait untill server is ready to start spawning clients
-    while(!server.checkServerReady())
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
     for (int i = 0; i < 5; i++) {
         std::thread clientThread(&ChatServer::createClient, &server, serverAddress, i);
         clients.push_back(std::move(clientThread));
