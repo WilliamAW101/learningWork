@@ -16,21 +16,18 @@
 class ChatServer {
     public:
         ChatServer();
-        void createClient(sockaddr_in serverAddress, int client);
         void startServer();
-        void stopServer();
-        bool sClientActive();
-        bool checkServerReady();
     private:
-        sockaddr_in serverAddress;
-        int serverSocket;
-        std::atomic<bool> stopThread;
-        std::atomic<int> sharedCounter;
         void handleClient(int clientSocket);
         void broadCastMessage(const std::string &message, int clientSenderSocket);
-        std::atomic<bool> isServerReady;
+        void stopServer();
+
+        int serverSocket;
+        sockaddr_in serverAddress;
+        std::atomic<bool> stopThread;
         std::vector<int> clientSockets;
         std::mutex clientLock;
+        std::atomic<int> clientCounter;
 
 };
 
