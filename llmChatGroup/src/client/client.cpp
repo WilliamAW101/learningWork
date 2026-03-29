@@ -15,10 +15,17 @@ void Client::createClient(){
 
     std::thread clientListener([this]() {
         char buffer[1024] = { 0 };
-        while (recv(clientSocket, buffer, sizeof(buffer), 0) > 0){
-            if (forceStopClient->load())
-                break;
-            std::cout << buffer << "\n";
+        while (1){
+            int bytesRead = recv(clientSocket, buffer, sizeof(buffer), 0);
+            if (bytesRead > 0){
+                buffer[bytesRead] = '\0'; // looks like client side is the problem
+                std::string bufferString(buffer, bytesRead); // we need to make sure we send the whole message, apparenlty what happens is TCP splits it up and we
+                                                             // need to accumilate all the packets untill the end and then send.
+                if (forceStopClient->load())
+                    break;
+                std::cout << buffer << "\n";
+            }
+
         }
     });
     isClientOn.store(true);
