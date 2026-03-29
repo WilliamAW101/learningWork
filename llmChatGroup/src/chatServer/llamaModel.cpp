@@ -14,7 +14,7 @@ LlamaModel::LlamaModel(const std::string &modelPath) : modelPath(modelPath) {
 
     // initializing the model
     modelParams = llama_model_default_params();
-    modelParams.n_gpu_layers = 99;
+    modelParams.n_gpu_layers = -1;
     model = llama_model_load_from_file(modelPath.c_str(), modelParams);
 
     if (model == NULL) {
@@ -33,11 +33,12 @@ LlamaModel::~LlamaModel() {
 }
 
 std::string LlamaModel::generateText(const std::string &message) {
+
     // first tokenize the prompt
     std::vector<llama_token> tokenList;
-    std::string formatted = "<start_of_turn>user\n" + message + "<end_of_turn>\n<start_of_turn>model\n";
+    std::string formatted = "<bos><start_of_turn>user\n" + message + "<end_of_turn>\n<start_of_turn>model\n";
+
     params.prompt = formatted;
-    //params.prompt = message;
     params.n_predict = 256; // lets just make this a cap for now
 
     // total length of the sequences including the prompt
@@ -124,15 +125,14 @@ std::string LlamaModel::generateText(const std::string &message) {
             break;
     
         std::string piece = common_token_to_piece(ctx, new_token);
-        
-        // stop if we see turn markers
-        if (piece.find("<end_of_turn>") != std::string::npos) 
-            break;
-        if (piece.find("<start_of_turn>") != std::string::npos) 
-            break;
     
         generated += piece;
-        std::cout << piece << std::flush;
+        const std::string messageToFind = "<end_of_turn>";
+        size_t position = generated.find(messageToFind);
+        if (position != std::string::npos) {
+            generated.erase(position, generated.length());
+            break;
+        } 
     
         common_batch_clear(batch);
         common_batch_add(batch, new_token, n_cur++, {0}, true);
@@ -142,10 +142,6 @@ std::string LlamaModel::generateText(const std::string &message) {
     
         generatedTokens++;
     }
-
-    auto pos = generated.find("<end_of_turn>");
-    if (pos != std::string::npos)
-        generated = generated.substr(0, pos);
 
 
     llama_batch_free(batch);

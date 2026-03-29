@@ -10,6 +10,12 @@ set(LLAMA_BIN ${LLAMA_DIR}/build/bin)
 add_executable(server
     src/chatServer/main.cpp
     src/chatServer/llamaModel.cpp
+    src/chatServer/server.cpp
+)
+
+add_executable(client
+    src/client/main.cpp
+    src/client/client.cpp
 )
 
 target_include_directories(server PRIVATE
@@ -25,8 +31,8 @@ target_link_libraries(server
     ${LLAMA_BIN}/libggml-cpu.so
     ${LLAMA_BIN}/libggml-cuda.so
     ${LLAMA_DIR}/build/common/libcommon.a
-    ${LLAMA_BIN}/libggml-base.so    # link again after common — resolves circular dep
-    ${LLAMA_BIN}/libggml.so         # same
+    ${LLAMA_BIN}/libggml-base.so 
+    ${LLAMA_BIN}/libggml.so
     pthread
     m
     dl

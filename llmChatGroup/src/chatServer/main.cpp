@@ -1,10 +1,13 @@
-#include "llamaModel.hpp"
+#include "server.hpp"
 
-int main(){
-    LlamaModel MIRA("/home/angelo/randomCrap/llmChatGroup/models/gemma.gguf");
-    std::string message = MIRA.generateText("Explain to me what you see");
-    std::cout << "START OF MESSAGE\n" << std::endl; 
-    std::cout << message << std::endl;
+int main() {
+    std::cout << "Starting Main" << std::endl;
+    Server server;
+    std::thread serverThread(&Server::startServer, &server);
+    if (serverThread.joinable()) {
+        serverThread.join();
+    }
+    std::cout << "Server Shutdown" << std::endl;
 
     return 0;
 }
