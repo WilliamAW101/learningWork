@@ -132,7 +132,7 @@ std::string LlamaModel::generateText(const std::string &message) {
         if (position != std::string::npos) {
             generated.erase(position, generated.length());
             break;
-        } 
+        }
     
         common_batch_clear(batch);
         common_batch_add(batch, new_token, n_cur++, {0}, true);

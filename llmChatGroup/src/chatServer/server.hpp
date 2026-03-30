@@ -14,6 +14,7 @@
 #include <memory>
 #include <string>
 #include "llamaModel.hpp"
+#include "history.hpp"
 
 class Server {
     public:
@@ -33,6 +34,7 @@ class Server {
         std::mutex clientLock;
         std::atomic<int> clientCounter;
         LlamaModel *model;
+        History *history;
 
 };
 

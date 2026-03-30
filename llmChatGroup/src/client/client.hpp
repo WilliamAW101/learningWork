@@ -13,7 +13,7 @@
 
 class Client {
     public:
-        Client();
+        Client(const std::string clientName);
         void createClient();
         void shutdownClient();
         void sendMessage(const std::string &message);
@@ -22,6 +22,7 @@ class Client {
         int clientSocket;
         sockaddr_in serverAddress; // this will probs be localhost
         std::shared_ptr<std::atomic<bool>> forceStopClient;
+        std::string clientName;
 };
 
 #endif

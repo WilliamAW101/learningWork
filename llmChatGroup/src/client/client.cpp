@@ -1,6 +1,6 @@
 #include "client.hpp"
 
-Client::Client(){
+Client::Client(const std::string clientName) : clientName(clientName){
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(8080);
     inet_pton(AF_INET, "127.0.0.1", &(serverAddress.sin_addr));
@@ -23,7 +23,7 @@ void Client::createClient(){
                                                              // need to accumilate all the packets untill the end and then send.
                 if (forceStopClient->load())
                     break;
-                std::cout << buffer << "\n";
+                std::cout << "\n" << buffer << "\n\n";
             }
 
         }
@@ -46,6 +46,6 @@ void Client::shutdownClient(){
 void Client::sendMessage(const std::string &message){
     if (message == "exit")
         return;
-    std::string clientPreMessage = "From Client: " + std::to_string(clientSocket) + " : " + message;
+    std::string clientPreMessage = "[" + clientName + "] " + message;
     send(clientSocket, clientPreMessage.c_str(), clientPreMessage.length(), 0);
 }

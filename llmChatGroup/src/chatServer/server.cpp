@@ -1,10 +1,13 @@
 #include "server.hpp"
-#include "llamaModel.hpp"
 
 Server::Server() {
 
     // we need to set up the llama model
     model = new LlamaModel("/home/angelo/randomCrap/llmChatGroup/models/gemma.gguf");
+
+    // set up the memory
+    history = new History();
+
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     int opt = 1;
     setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
@@ -51,14 +54,18 @@ void Server::handleClient(int clientSocket) {
             std::string bufferString(buffer, bytesRead); // clearing the buffer string, hopefully this fixes the leaking characters
             std::cout << "Message from client: " << bufferString << "\n";
 
+            broadCastMessage(bufferString, clientSocket); // lets both send to MIRA and all the clients, gives everyone context as to why MIRA responded
+
             if (bufferString.find("Hey MIRA:") != std::string::npos) {
+                char delimiter = ':';
+                size_t pos = bufferString.find(delimiter);
+                bufferString.erase(0, pos + 1);
                 // If I dont run this on seperate thread, text generation can block the loop
                 std::thread([this, bufferString]() {
-                    std::string response = model->generateText(bufferString);
+                    std::string response = model->generateText(history->shortTermMemory() + "\n" + bufferString);
                     broadCastMIRAMessage("MIRA: " + response);
                 }).detach();
             } 
-            broadCastMessage(bufferString, clientSocket); // lets both send to MIRA and all the clients, gives everyone context as to why MIRA responded
         } else {
             break;
         }
@@ -92,4 +99,5 @@ void Server::broadCastMIRAMessage(const std::string &message) {
 
 Server::~Server(){
     delete model;
+    delete history;
 }

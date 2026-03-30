@@ -11,6 +11,7 @@ add_executable(server
     src/chatServer/main.cpp
     src/chatServer/llamaModel.cpp
     src/chatServer/server.cpp
+    src/chatServer/history.cpp
 )
 
 add_executable(client
